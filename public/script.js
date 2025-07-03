@@ -4,6 +4,23 @@ const promptInput = document.getElementById('prompt-input');
 const sendBtn = document.getElementById('send-btn');
 const modelSelect = document.getElementById('model-select');
 
+// Carga dinámica de modelos al iniciar
+async function loadModels() {
+    try {
+        const resp = await fetch('/models');
+        const json = await resp.json();
+        (json.data || json.models || []).forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = m.id;
+            modelSelect.appendChild(opt);
+        });
+    } catch (e) {
+        console.error('No se pudieron cargar modelos', e);
+    }
+}
+
+// Añade una burbuja de mensaje
 function appendMessage(text, cls) {
     const el = document.createElement('div');
     el.className = `message ${cls}`;
@@ -17,12 +34,12 @@ sendBtn.addEventListener('click', async () => {
     const model = modelSelect.value;
     if (!prompt) return;
 
-    // usuario
+    // Mensaje usuario
     appendMessage(prompt, 'user');
     promptInput.value = '';
     sendBtn.disabled = true;
 
-    // burbuja bot vacía
+    // Burbuja bot vacía
     appendMessage('', 'bot');
     const contentEl = messagesDiv.querySelector('.message.bot:last-child .content');
 
@@ -44,27 +61,23 @@ sendBtn.addEventListener('click', async () => {
             buffer += decoder.decode(value, { stream: true });
 
             // Procesar bloques SSE separados por doble salto de línea
-            let parts = buffer.split('\n\n');
-            buffer = parts.pop(); // conserva última parte incompleta
+            const parts = buffer.split('\n\n');
+            buffer = parts.pop(); // parte incompleta
 
             for (let part of parts) {
-                // cada línea que empieza con "data: "
-                for (let line of part.split('\n')) {
-                    if (!line.startsWith('data: ')) continue;
-                    const json = line.slice(6).trim();
-                    if (json === '[DONE]') {
-                        done = true;
-                        break;
-                    }
+                part.split('\n').forEach(line => {
+                    if (!line.startsWith('data: ')) return;
+                    const jsonStr = line.slice(6).trim();
+                    if (jsonStr === '[DONE]') return;
                     try {
-                        const chunk = JSON.parse(json);
+                        const chunk = JSON.parse(jsonStr);
                         const delta = chunk.choices?.[0]?.delta?.content;
                         if (delta) {
                             contentEl.textContent += delta;
                             messagesDiv.scrollTop = messagesDiv.scrollHeight;
                         }
-                    } catch (_) { /* ignora parse errors */ }
-                }
+                    } catch (_) { /* ignora errores de parse */ }
+                });
             }
         }
     } catch (err) {
@@ -74,3 +87,6 @@ sendBtn.addEventListener('click', async () => {
         sendBtn.disabled = false;
     }
 });
+
+// Inicializa
+loadModels();
