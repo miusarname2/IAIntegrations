@@ -25,7 +25,11 @@ function formatMarkdown(text) {
     const withDetails = text.replace(/<think>([\s\S]*?)<\/think>/g, (_, inner) => {
         return `<details class=\"think-block\"><summary>Pensamientos</summary><pre>${inner.trim()}</pre></details>`;
     });
-    // Renderiza Markdown con marked.js
+    // Renderiza Markdown con marked.js (usar parse en lugar de invocar marcado como función)
+    if (typeof marked.parse === 'function') {
+        return marked.parse(withDetails);
+    }
+    // Compatibilidad con versiones antiguas de marked
     return marked(withDetails);
 }
 
