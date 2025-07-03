@@ -4,14 +4,27 @@ const promptInput = document.getElementById('prompt-input');
 const sendBtn = document.getElementById('send-btn');
 const modelSelect = document.getElementById('model-select');
 
-function appendMessage(content, sender) {
-    const msgEl = document.createElement('div');
-    msgEl.classList.add('message', sender);
-    const contEl = document.createElement('div');
-    contEl.classList.add('content');
-    contEl.textContent = content;
-    msgEl.appendChild(contEl);
-    messagesDiv.appendChild(msgEl);
+// Carga dinámica de modelos al iniciar
+async function loadModels() {
+    try {
+        const resp = await fetch('/models');
+        const { data } = await resp.json();
+        data.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = m.id;
+            modelSelect.appendChild(opt);
+        });
+    } catch (e) {
+        console.error('No se pudieron cargar modelos', e);
+    }
+}
+
+function appendMessage(text, cls) {
+    const el = document.createElement('div');
+    el.className = `message ${cls}`;
+    el.innerHTML = `<div class="content">${text}</div>`;
+    messagesDiv.appendChild(el);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
@@ -25,22 +38,20 @@ sendBtn.addEventListener('click', async () => {
     appendMessage('...', 'bot');
 
     try {
-        const response = await fetch('/chat', {
+        const res = await fetch('/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ prompt, model })
         });
-
-        if (!response.ok) throw new Error('Error en la respuesta del servidor');
-        const reader = response.body.getReader();
-        let botResp = '';
-        const lastMsg = messagesDiv.querySelector('.message.bot:last-child .content');
-
+        if (!res.ok) throw new Error(await res.text());
+        const reader = res.body.getReader();
+        let text = '';
+        const contentEl = messagesDiv.querySelector('.message.bot:last-child .content');
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            botResp += new TextDecoder().decode(value);
-            lastMsg.textContent = botResp;
+            text += new TextDecoder().decode(value);
+            contentEl.textContent = text;
         }
     } catch (err) {
         appendMessage('Error: ' + err.message, 'bot');
@@ -49,3 +60,6 @@ sendBtn.addEventListener('click', async () => {
         sendBtn.disabled = false;
     }
 });
+
+// Arranca
+loadModels();

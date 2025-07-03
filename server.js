@@ -11,26 +11,43 @@ const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.post('/chat', async (req, res) => {
-  const { prompt, model } = req.body;
-  if (!prompt || !model) {
-    return res.status(400).json({ error: 'Missing prompt or model' });
-  }
-
+// Proxy para listar modelos instalados
+app.get('/models', async (_req, res) => {
   try {
-    const response = await axios.post(
-      `${OLLAMA_URL}/v1/chat/completions`,
-      { model, messages: [{ role: 'user', content: prompt }] },
-      { responseType: 'stream' }
-    );
-
-    response.data.on('data', (chunk) => res.write(chunk));
-    response.data.on('end', () => res.end());
-    response.data.on('error', () => res.end());
+    const resp = await axios.get(`${OLLAMA_URL}/v1/models`);
+    res.json(resp.data);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Error querying Ollama' });
+    res.status(500).json({ error: 'No se pudo listar los modelos' });
   }
 });
 
-app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+// Chat con streaming OpenAI‑compat
+app.post('/chat', async (req, res) => {
+  const { prompt, model } = req.body;
+  if (!prompt || !model) {
+    return res.status(400).json({ error: 'Falta prompt o modelo' });
+  }
+  try {
+    const resp = await axios.post(
+      `${OLLAMA_URL}/v1/chat/completions`,
+      {
+        model,
+        stream: true,
+        messages: [
+          { role: 'system', content: 'Eres un asistente útil.' },
+          { role: 'user', content: prompt }
+        ]
+      },
+      { responseType: 'stream' }
+    );
+    resp.data.on('data', chunk => res.write(chunk));
+    resp.data.on('end', () => res.end());
+    resp.data.on('error', () => res.end());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al llamar a Ollama' });
+  }
+});
+
+app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
