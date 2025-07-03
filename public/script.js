@@ -20,10 +20,26 @@ async function loadModels() {
     }
 }
 
-function appendMessage(text, cls) {
+function formatMarkdown(text) {
+    // Procesa bloques <think>...</think> como detalles colapsables
+    const withDetails = text.replace(/<think>([\s\S]*?)<\/think>/g, (_, inner) => {
+        return `<details class=\"think-block\"><summary>Pensamientos</summary><pre>${inner.trim()}</pre></details>`;
+    });
+    // Renderiza Markdown con marked.js
+    return marked(withDetails);
+}
+
+function appendMessage(rawText, cls) {
     const el = document.createElement('div');
     el.className = `message ${cls}`;
-    el.innerHTML = `<div class="content">${text}</div>`;
+    const contentEl = document.createElement('div');
+    contentEl.className = 'content';
+    if (cls === 'bot') {
+        contentEl.innerHTML = formatMarkdown(rawText);
+    } else {
+        contentEl.textContent = rawText;
+    }
+    el.appendChild(contentEl);
     messagesDiv.appendChild(el);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
@@ -48,14 +64,13 @@ sendBtn.addEventListener('click', async () => {
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let text = '';
-        const contentEl = messagesDiv.querySelector('.message.bot:last-child .content');
+        const lastMsg = messagesDiv.querySelector('.message.bot:last-child');
+        const contentEl = lastMsg.querySelector('.content');
 
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-
             const chunk = decoder.decode(value, { stream: true });
-            // Cada línea empieza con "data: "
             chunk.split(/\r?\n/).forEach(line => {
                 if (!line.startsWith('data: ')) return;
                 const payload = line.replace(/^data: /, '').trim();
@@ -65,7 +80,7 @@ sendBtn.addEventListener('click', async () => {
                     const delta = parsed.choices[0].delta.content;
                     if (delta) {
                         text += delta;
-                        contentEl.textContent = text;
+                        contentEl.innerHTML = formatMarkdown(text);
                     }
                 } catch (err) {
                     console.error('Error parsing chunk', err);
