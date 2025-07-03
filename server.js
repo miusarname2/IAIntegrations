@@ -42,6 +42,10 @@ const baseTraining = [
   {
     role: 'assistant',
     content: `La Corporación Avance ofrece los siguientes productos:\n\n• **NEC**  \nSistema de Notificaciones Electrónicas Certificadas, que permite administrar comunicaciones de manera ágil, segura y verificable, conservando un registro del envío, la entrega y el contenido.\n\n• **SIGNO!**  \nSolución integrada para gestionar y administrar las actividades del servicio notarial. Permite consultas en línea, es robusta, escalable y se actualiza conforme a la normativa legal.\n\n• **HUB Documental**  \nPlataforma integral para la administración de trámites y flujos documentales certificados. Ofrece firmas electrónicas o digitales desde cualquier dispositivo, garantizando validez legal.\n\n• **Factel**  \nPlataforma de facturación electrónica que cumple con los requisitos de la DIAN. Permite emitir facturas, nóminas y documentos electrónicos equivalentes, ya sea mediante interfaz web o integración por webservice.\n\n• **SIMCO**  \nSistema Integral de Mensajería Confiable para mensajería urbana. Integra procesos operativos, administrativos y financieros en una plataforma fácil de usar y económica.\n\n• **BioID**  \nSistema de verificación de identidad mediante validación de documentos, reconocimiento facial y pruebas de “liveness”. Adaptable a múltiples industrias para agilizar procesos de incorporación de clientes o empleados.`
+  },
+  {
+    "role": "user",
+    "content": "Por favor responde como un asistente empresarial profesional. Resume en español claro y sin inventar, los productos de la Corporación Avance. No agregues nada que no esté en el contexto."
   }
 ];
 
