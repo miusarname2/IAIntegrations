@@ -4,6 +4,19 @@ const promptInput = document.getElementById('prompt-input');
 const sendBtn = document.getElementById('send-btn');
 const modelSelect = document.getElementById('model-select');
 
+// Agregar toggle para mostrar/ocultar pensamientos
+const inputArea = document.querySelector('.input-area');
+const thinkToggleLabel = document.createElement('label');
+const thinkToggle = document.createElement('input');
+thinkToggle.type = 'checkbox';
+thinkToggle.id = 'toggle-think';
+thinkToggleLabel.appendChild(thinkToggle);
+thinkToggleLabel.append(' Mostrar pensamientos');
+inputArea.insertBefore(thinkToggleLabel, inputArea.firstChild);
+thinkToggle.addEventListener('change', () => {
+    document.querySelectorAll('details.think-block').forEach(d => d.open = thinkToggle.checked);
+});
+
 // Carga dinámica de modelos al iniciar
 async function loadModels() {
     try {
@@ -25,11 +38,10 @@ function formatMarkdown(text) {
     const withDetails = text.replace(/<think>([\s\S]*?)<\/think>/g, (_, inner) => {
         return `<details class=\"think-block\"><summary>Pensamientos</summary><pre>${inner.trim()}</pre></details>`;
     });
-    // Renderiza Markdown con marked.js (usar parse en lugar de invocar marcado como función)
+    // Renderiza Markdown con marked.js
     if (typeof marked.parse === 'function') {
         return marked.parse(withDetails);
     }
-    // Compatibilidad con versiones antiguas de marked
     return marked(withDetails);
 }
 
@@ -85,6 +97,10 @@ sendBtn.addEventListener('click', async () => {
                     if (delta) {
                         text += delta;
                         contentEl.innerHTML = formatMarkdown(text);
+                        // Ajustar toggle si ya marcado
+                        if (thinkToggle.checked) {
+                            document.querySelectorAll('details.think-block').forEach(d => d.open = true);
+                        }
                     }
                 } catch (err) {
                     console.error('Error parsing chunk', err);
