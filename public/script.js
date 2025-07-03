@@ -14,7 +14,7 @@ thinkToggleLabel.appendChild(thinkToggle);
 thinkToggleLabel.append(' Mostrar pensamientos');
 inputArea.insertBefore(thinkToggleLabel, inputArea.firstChild);
 thinkToggle.addEventListener('change', () => {
-    document.querySelectorAll('details.think-block').forEach(d => d.open = thinkToggle.checked);
+    document.querySelectorAll('details.think-block').forEach(d => d.open = true);
 });
 
 // Carga dinámica de modelos al iniciar
